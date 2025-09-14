@@ -60,7 +60,6 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 // --- ROUTES ---
 
-// THIS ROUTE WAS MISSING. IT'S REQUIRED FOR THE LOGIN BUTTON TO WORK.
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
   res.redirect('https://accounts.spotify.com/authorize?' +
@@ -124,25 +123,38 @@ app.get('/callback', async (req, res) => {
   }
 });
 
-
 app.get('/api/match', async (req, res) => {
-    try {
-        const accessToken = req.query.access_token;
-        if (!accessToken) {
-            return res.status(401).json({ error: 'Access token not provided' });
-        }
-
-        const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        const currentUserProfile = profileResponse.data;
-        const currentUserId = currentUserProfile.id;
-
-        // ... rest of the code is the same
-    } catch (error) {
-        console.error('Error in /match:', error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'Failed to find a match.' });
+      try {
+    const accessToken = req.query.access_token;
+    if (!accessToken) {
+      return res.status(401).json({ error: 'Access token not provided' });
     }
+
+    const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const currentUserProfile = profileResponse.data;
+    const currentUserId = currentUserProfile.id;
+
+    const allUsers = await User.find({ spotifyId: { $ne: currentUserId } });
+    const currentUser = await User.findOne({ spotifyId: currentUserId });
+
+    if (!currentUser || !currentUser.topArtists) {
+      return res.status(404).json({ error: 'Current user not found or no top artists' });
+    }
+
+    const bestMatch = findBestMatch(currentUser.topArtists, allUsers);
+
+    if (bestMatch) {
+      res.json({ match: bestMatch.displayName, matchId: bestMatch.spotifyId });
+    } else {
+      res.json({ match: 'No match found. Invite your friends!' });
+    }
+
+  } catch (error) {
+    console.error('Error in /match:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to find a match.' });
+  }
 });
 
 // --- Socket.IO Connection ---
