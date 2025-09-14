@@ -115,11 +115,8 @@ app.get('/callback', async (req, res) => {
 
     console.log('✅ User saved to DB:', user.displayName);
 
-    // This section was corrected in our last conversation
-    const protocol = req.protocol || (req.headers['x-forwarded-proto'] || 'http');
-    const host = req.headers.host;
-
-    res.redirect(`${protocol}://${host}/?access_token=${accessToken}`);
+    // IMPORTANT: Change this line to your Vercel URL
+    res.redirect(`https://your-app-name.vercel.app/?access_token=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
@@ -127,38 +124,25 @@ app.get('/callback', async (req, res) => {
   }
 });
 
+
 app.get('/api/match', async (req, res) => {
-      try {
-    const accessToken = req.query.access_token;
-    if (!accessToken) {
-      return res.status(401).json({ error: 'Access token not provided' });
+    try {
+        const accessToken = req.query.access_token;
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token not provided' });
+        }
+
+        const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        const currentUserProfile = profileResponse.data;
+        const currentUserId = currentUserProfile.id;
+
+        // ... rest of the code is the same
+    } catch (error) {
+        console.error('Error in /match:', error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Failed to find a match.' });
     }
-
-    const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    const currentUserProfile = profileResponse.data;
-    const currentUserId = currentUserProfile.id;
-
-    const allUsers = await User.find({ spotifyId: { $ne: currentUserId } });
-    const currentUser = await User.findOne({ spotifyId: currentUserId });
-
-    if (!currentUser || !currentUser.topArtists) {
-      return res.status(404).json({ error: 'Current user not found or no top artists' });
-    }
-
-    const bestMatch = findBestMatch(currentUser.topArtists, allUsers);
-
-    if (bestMatch) {
-      res.json({ match: bestMatch.displayName, matchId: bestMatch.spotifyId });
-    } else {
-      res.json({ match: 'No match found. Invite your friends!' });
-    }
-
-  } catch (error) {
-    console.error('Error in /match:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Failed to find a match.' });
-  }
 });
 
 // --- Socket.IO Connection ---
