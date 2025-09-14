@@ -120,7 +120,7 @@ app.get('/callback', async (req, res) => {
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
     res.status(500).send('Authentication failed.');
-  }
+  }a
 });
 
 app.get('/api/match', async (req, res) => {
