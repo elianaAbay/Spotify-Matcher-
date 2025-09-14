@@ -114,7 +114,8 @@ app.get('/callback', async (req, res) => {
 
     console.log('✅ User saved to DB:', user.displayName);
 
-    res.redirect(`http://localhost:3000/?access_token=${accessToken}`);
+    // IMPORTANT: Change this line to your Vercel URL
+    res.redirect(`https://your-app-name.vercel.app/?access_token=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
