@@ -60,17 +60,6 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 // --- ROUTES ---
 
-app.get('/login', (req, res) => {
-  const scope = 'user-read-private user-top-read';
-  res.redirect('https://accounts.spotify.com/authorize?' +
-    querystring.stringify({
-      response_type: 'code',
-      client_id: SPOTIFY_CLIENT_ID,
-      scope: scope,
-      redirect_uri: REDIRECT_URI,
-    }));
-});
-
 app.get('/callback', async (req, res) => {
   const code = req.query.code || null;
 
@@ -114,14 +103,19 @@ app.get('/callback', async (req, res) => {
 
     console.log('✅ User saved to DB:', user.displayName);
 
-    // IMPORTANT: Change this line to your actual Vercel URL
-    res.redirect(`https://spotify-matcher.vercel.app/?access_token=${accessToken}`);
+    // Get the correct protocol and host from the request headers
+    const protocol = req.protocol || (req.headers['x-forwarded-proto'] || 'http');
+    const host = req.headers.host;
+
+    // Use a template literal to build the dynamic URL
+    res.redirect(`${protocol}://${host}/?access_token=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
     res.status(500).send('Authentication failed.');
-  }a
+  }
 });
+
 
 app.get('/api/match', async (req, res) => {
       try {
