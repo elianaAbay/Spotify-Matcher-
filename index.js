@@ -3,6 +3,7 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -31,6 +32,9 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 app.use(cors());
+
+// --- Serve static files from the 'public' directory ---
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Core Matching Function ---
 const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
@@ -112,7 +116,8 @@ app.get('/callback', async (req, res) => {
 
     console.log('✅ User saved to DB:', user.displayName);
 
-    res.redirect(`http://localhost:3000/?access_token=${accessToken}`);
+    // --- FIX: Redirect to the Vercel URL ---
+    res.redirect(`${process.env.VERCEL_URL}/?access_token=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
@@ -205,11 +210,7 @@ io.on('connection', (socket) => {
     }
   });
 });
-app.get('/', (req, res) => {
-  res.send('Your server is running!');
-});
 
 server.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
-
