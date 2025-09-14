@@ -115,7 +115,7 @@ app.get('/callback', async (req, res) => {
     console.log('✅ User saved to DB:', user.displayName);
 
     // IMPORTANT: Change this line to your actual Vercel URL
-    res.redirect(`https://your-app-name.vercel.app/?access_token=${accessToken}`);
+    res.redirect(`https://spotify-matcher.vercel.app/=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
