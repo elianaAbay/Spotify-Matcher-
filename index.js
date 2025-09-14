@@ -60,6 +60,18 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 // --- ROUTES ---
 
+// THIS ROUTE WAS MISSING. IT'S REQUIRED FOR THE LOGIN BUTTON TO WORK.
+app.get('/login', (req, res) => {
+  const scope = 'user-read-private user-top-read';
+  res.redirect('https://accounts.spotify.com/authorize?' +
+    querystring.stringify({
+      response_type: 'code',
+      client_id: SPOTIFY_CLIENT_ID,
+      scope: scope,
+      redirect_uri: REDIRECT_URI,
+    }));
+});
+
 app.get('/callback', async (req, res) => {
   const code = req.query.code || null;
 
@@ -103,11 +115,10 @@ app.get('/callback', async (req, res) => {
 
     console.log('✅ User saved to DB:', user.displayName);
 
-    // Get the correct protocol and host from the request headers
+    // This section was corrected in our last conversation
     const protocol = req.protocol || (req.headers['x-forwarded-proto'] || 'http');
     const host = req.headers.host;
 
-    // Use a template literal to build the dynamic URL
     res.redirect(`${protocol}://${host}/?access_token=${accessToken}`);
 
   } catch (error) {
@@ -115,7 +126,6 @@ app.get('/callback', async (req, res) => {
     res.status(500).send('Authentication failed.');
   }
 });
-
 
 app.get('/api/match', async (req, res) => {
       try {
