@@ -35,13 +35,63 @@
         .login-button:hover {
             background-color: #179340;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Spotify Match Blend</h1>
-        <p>Find your music match and start chatting!</p>
-        <a href="/login" class="login-button">Log in with Spotify</a>
+        <div id="login-section">
+            <h1>Welcome to Spotify Match Blend</h1>
+            <p>Find your music match and start chatting!</p>
+            <a href="/login" class="login-button">Log in with Spotify</a>
+        </div>
+        <div id="app-section" class="hidden">
+            <h1>Logged in!</h1>
+            <p>Find your perfect match to get started.</p>
+            <button id="match-button" class="login-button">Find My Match</button>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const accessToken = params.get('access_token');
+            
+            const loginSection = document.getElementById('login-section');
+            const appSection = document.getElementById('app-section');
+            const matchButton = document.getElementById('match-button');
+            
+            if (accessToken) {
+                // User is logged in
+                loginSection.classList.add('hidden');
+                appSection.classList.remove('hidden');
+                
+                matchButton.addEventListener('click', () => {
+                    // Send a request to your server's /api/match endpoint
+                    fetch(`/api/match?access_token=${accessToken}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Display the match result to the user
+                            if (data.match) {
+                                alert(`You matched with: ${data.match}`);
+                            } else {
+                                alert('No match found. Invite your friends!');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching match:', error);
+                            alert('Failed to find a match.');
+                        });
+                });
+
+            } else {
+                // User is not logged in, show login button
+                loginSection.classList.remove('hidden');
+                appSection.classList.add('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
