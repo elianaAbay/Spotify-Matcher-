@@ -13,6 +13,7 @@ const User = require('./models/User');
 const Chat = require('./models/Chat');
 
 const app = express();
+app.use(express.static(path.join(__dirname, 'public')))
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -32,9 +33,6 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 app.use(cors());
-
-// --- Serve static files from the 'public' directory ---
-app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Core Matching Function ---
 const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
@@ -64,7 +62,7 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
-  res.redirect('https://accounts.spotify.com/authorize?'  +
+  res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
       client_id: SPOTIFY_CLIENT_ID,
@@ -116,8 +114,7 @@ app.get('/callback', async (req, res) => {
 
     console.log('✅ User saved to DB:', user.displayName);
 
-    // --- FIX: Redirect to the Vercel URL ---
-    res.redirect(`${process.env.VERCEL_URL}/?access_token=${accessToken}`);
+    res.redirect(`http://localhost:3000/?access_token=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
