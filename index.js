@@ -64,7 +64,7 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
-  res.redirect('https://accounts.spotify.com/authorize?' +
+  res.redirect('https://accounts.spotify.com/authorize?'  +
     querystring.stringify({
       response_type: 'code',
       client_id: SPOTIFY_CLIENT_ID,
