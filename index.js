@@ -205,11 +205,11 @@ io.on('connection', (socket) => {
     }
   });
 });
+app.get('/', (req, res) => {
+  res.send('Your server is running!');
+});
 
 server.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
 
-app.get('/', (req, res) => {
-  res.send('Your server is running!');
-});
