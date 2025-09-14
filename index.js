@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://spotify-matcher.vercel.app"],
     methods: ["GET", "POST"]
   }
 });
@@ -73,7 +73,14 @@ app.get('/login', (req, res) => {
 
 app.get('/callback', async (req, res) => {
   const code = req.query.code || null;
+  // In your /callback route in index.js
+  // 
+  const protocol = req.protocol || (req.headers['x-forwarded-proto'] || 'https');
+  const host = req.headers.host;
+  
+  res.redirect(`${protocol}://${host}/?access_token=${accessToken}`);
 
+  
   try {
     const tokenResponse = await axios({
       method: 'post',
@@ -115,7 +122,7 @@ app.get('/callback', async (req, res) => {
     console.log('✅ User saved to DB:', user.displayName);
 
     // IMPORTANT: Change this line to your Vercel URL
-    res.redirect(`https://your-app-name.vercel.app/?access_token=${accessToken}`);
+    res.redirect(`https://spotify-matcher.vercel.app/?access_token=${accessToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
