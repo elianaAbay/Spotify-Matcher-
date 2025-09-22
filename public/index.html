@@ -30,10 +30,12 @@
             border-radius: 50px;
             font-size: 18px;
             font-weight: bold;
-            transition: background-color 0.3s ease;
+            cursor: pointer; /* Makes it clear the element is clickable */
+            transition: transform 0.3s ease-in-out, background-color 0.3s ease;
         }
         .login-button:hover {
             background-color: #179340;
+            transform: scale(1.1); /* This makes the button 10% larger */
         }
         .hidden {
             display: none;
