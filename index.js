@@ -9,24 +9,25 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const axios = require('axios');
 const querystring = require('querystring');
-const jwt = require('jsonwebtoken'); // Import jsonwebtoken for JWTs
+const jwt = require('jsonwebtoken'); 
 
-const User = require('./models/User');
-const Chat = require('./models/Chat');
-const authMiddleware = require('./middleware/auth'); // Import the auth middleware
+// --- Dependencies you need to define ---
+const User = require('./models/User'); // Mongoose model
+const Chat = require('./models/Chat'); // Mongoose model
+const authMiddleware = require('./middleware/auth'); // Authentication middleware
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json()); // Add this line to parse JSON request bodies
+app.use(express.json());
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://spotify-matcher.vercel.app", // Corrected URL: removed the extra space
+    origin: "https://spotify-matcher.vercel.app", 
     methods: ["GET", "POST"]
   }
 });
-const PORT = process.env.PORT || 8888; // Use environment variable for port
+const PORT = process.env.PORT || 8888; 
 
 // --- Spotify & MongoDB Configuration ---
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
@@ -69,7 +70,7 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 // Redirect to Spotify login
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
-  res.redirect('https://accounts.spotify.com/authorize?' +
+  res.redirect('https://accounts.spotify.com/authorize?' + // CORRECT SPOTIFY URL
     querystring.stringify({
       response_type: 'code',
       client_id: SPOTIFY_CLIENT_ID,
@@ -81,11 +82,13 @@ app.get('/login', (req, res) => {
 // Spotify Callback - Handles authentication and saves user data
 app.get('/callback', async (req, res) => {
   const code = req.query.code || null;
-
+  
   try {
+    const authString = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
+
     const tokenResponse = await axios({
       method: 'post',
-      url: 'https://accounts.spotify.com/api/token',
+      url: 'https://accounts.spotify.com/api/token', // CORRECT SPOTIFY URL
       data: querystring.stringify({
         grant_type: 'authorization_code',
         code: code,
@@ -93,17 +96,17 @@ app.get('/callback', async (req, res) => {
       }),
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64')}`,
+        'Authorization': `Basic ${authString}`,
       },
     });
 
     const { access_token, refresh_token } = tokenResponse.data;
 
-    const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
+    const profileResponse = await axios.get('https://api.spotify.com/v1/me', { // CORRECT SPOTIFY URL
       headers: { 'Authorization': `Bearer ${access_token}` }
     });
 
-    const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', {
+    const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', { // CORRECT SPOTIFY URL
       headers: { 'Authorization': `Bearer ${access_token}` },
       params: { time_range: 'medium_term', limit: 20 }
     });
@@ -111,7 +114,7 @@ app.get('/callback', async (req, res) => {
     const userProfile = profileResponse.data;
     const topArtists = artistsResponse.data.items.map(artist => artist.name);
 
-    // Save/Update user data in MongoDB, including Spotify access and refresh tokens
+    // Save/Update user data in MongoDB
     const user = await User.findOneAndUpdate(
       { spotifyId: userProfile.id },
       {
@@ -128,7 +131,7 @@ app.get('/callback', async (req, res) => {
     // Create a JWT for your application
     const appToken = jwt.sign(
       { userId: user._id.toString(), spotifyId: user.spotifyId },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET, // Requires JWT_SECRET to be set
       { expiresIn: '1h' }
     );
 
@@ -144,10 +147,11 @@ app.get('/callback', async (req, res) => {
 // Protected Route to get the matched user
 app.get('/api/match', authMiddleware, async (req, res) => {
   try {
-    const currentUserId = req.userData.spotifyId; // Get spotifyId from the verified JWT
+    // Use the MongoDB _id from the verified JWT for cleaner lookups
+    const currentUserId = req.userData.userId; 
 
-    const allUsers = await User.find({ spotifyId: { $ne: currentUserId } });
-    const currentUser = await User.findOne({ spotifyId: currentUserId });
+    const allUsers = await User.find({ _id: { $ne: currentUserId } });
+    const currentUser = await User.findById(currentUserId);
 
     if (!currentUser || !currentUser.topArtists) {
       return res.status(404).json({ error: 'Current user not found or no top artists' });
@@ -165,36 +169,35 @@ app.get('/api/match', authMiddleware, async (req, res) => {
       res.json({ match: 'No match found. Invite your friends!' });
     }
   } catch (error) {
-    console.error('Error in /match:', error.response ? error.response.data : error.message);
+    console.error('Error in /match:', error.message);
     res.status(500).json({ error: 'Failed to find a match.' });
   }
 });
 
-// Protected route to fetch a user's Spotify data
+// Protected route to fetch a user's Spotify data (fetches from DB first)
 app.get('/api/spotify/top-artists', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.userData.userId); // Find user by ID from the JWT
+    const user = await User.findById(req.userData.userId); 
 
     if (!user || !user.spotifyAccessToken) {
       return res.status(401).json({ message: "User not authenticated with Spotify." });
     }
 
-    const response = await axios.get('https://api.spotify.com/v1/me/top/artists', {
-      headers: { 'Authorization': `Bearer ${user.spotifyAccessToken}` },
-      params: { time_range: 'medium_term', limit: 20 }
-    });
+    // Since you already fetched and saved topArtists in /callback,
+    // you can return the stored data to reduce Spotify API calls.
+    return res.status(200).json({ items: user.topArtists });
 
-    res.status(200).json(response.data);
-    
   } catch (error) {
-    console.error("Error fetching Spotify data:", error.response ? error.response.data : error.message);
-    res.status(500).json({ message: "Could not retrieve top artists from Spotify." });
+    console.error("Error fetching Spotify data:", error.message);
+    res.status(500).json({ message: "Could not retrieve top artists." });
   }
 });
 
 // --- Socket.IO Connection ---
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id);
+
+  // NOTE: This should be secured with a JWT check on connection/join for production.
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
