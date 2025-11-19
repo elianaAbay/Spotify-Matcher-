@@ -247,6 +247,14 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server is listening on port ${PORT}`);
-});
+// ... socket code above ...
+
+// ONLY listen if running locally (not on Vercel)
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`🚀 Server is listening on port ${PORT}`);
+  });
+}
+
+// Export the app for Vercel
+module.exports = app;
