@@ -250,11 +250,15 @@ io.on('connection', (socket) => {
 // ... socket code above ...
 
 // ONLY listen if running locally (not on Vercel)
+// ... socket code ...
+
+// 1. Only listen on port if running locally (NOT on Vercel)
 if (require.main === module) {
+  const PORT = process.env.PORT || 8888;
   server.listen(PORT, () => {
-    console.log(`🚀 Server is listening on port ${PORT}`);
+      console.log(`🚀 Server is listening on port ${PORT}`);
   });
 }
 
-// Export the app for Vercel
+// 2. THIS IS REQUIRED FOR VERCEL TO WORK
 module.exports = app;
