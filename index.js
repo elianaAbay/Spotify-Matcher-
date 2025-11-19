@@ -1,5 +1,3 @@
-// index.js
-
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -11,15 +9,17 @@ const axios = require('axios');
 const querystring = require('querystring');
 const jwt = require('jsonwebtoken'); 
 
-// --- Dependencies you need to define ---
-const User = require('./models/User'); // Mongoose model
-const Chat = require('./models/Chat'); // Mongoose model
-const authMiddleware = require('./middleware/auth'); // Authentication middleware
+// --- Local Dependencies ---
+// Ensure you have uploaded the 'models' and 'middleware' folders to Git!
+const User = require('./models/User'); 
+const Chat = require('./models/Chat'); 
+const authMiddleware = require('./middleware/auth'); 
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// --- Server & Socket.io Setup ---
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -27,14 +27,16 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-const PORT = process.env.PORT || 8888; 
 
-// --- Spotify & MongoDB Configuration ---
+// --- Configuration ---
+// Make sure these are set in Vercel Settings > Environment Variables
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
+const REDIRECT_URI = process.env.REDIRECT_URI; // Must match Spotify Dashboard & Vercel
 const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
+// --- MongoDB Connection ---
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
@@ -67,10 +69,10 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 // --- ROUTES ---
 
-// Redirect to Spotify login
+// 1. Redirect to Spotify login
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
-  res.redirect('https://accounts.spotify.com/authorize?' + // CORRECT SPOTIFY URL
+  res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
       client_id: SPOTIFY_CLIENT_ID,
@@ -79,16 +81,17 @@ app.get('/login', (req, res) => {
     }));
 });
 
-// Spotify Callback - Handles authentication and saves user data
+// 2. Spotify Callback - Handles authentication and saves user data
 app.get('/callback', async (req, res) => {
   const code = req.query.code || null;
   
   try {
     const authString = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
 
+    // Exchange Authorization Code for Access Token
     const tokenResponse = await axios({
       method: 'post',
-      url: 'https://accounts.spotify.com/api/token', // CORRECT SPOTIFY URL
+      url: 'https://accounts.spotify.com/api/token',
       data: querystring.stringify({
         grant_type: 'authorization_code',
         code: code,
@@ -102,11 +105,13 @@ app.get('/callback', async (req, res) => {
 
     const { access_token, refresh_token } = tokenResponse.data;
 
-    const profileResponse = await axios.get('https://api.spotify.com/v1/me', { // CORRECT SPOTIFY URL
+    // Fetch User Profile
+    const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
       headers: { 'Authorization': `Bearer ${access_token}` }
     });
 
-    const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', { // CORRECT SPOTIFY URL
+    // Fetch User's Top Artists
+    const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', {
       headers: { 'Authorization': `Bearer ${access_token}` },
       params: { time_range: 'medium_term', limit: 20 }
     });
@@ -131,23 +136,23 @@ app.get('/callback', async (req, res) => {
     // Create a JWT for your application
     const appToken = jwt.sign(
       { userId: user._id.toString(), spotifyId: user.spotifyId },
-      process.env.JWT_SECRET, // Requires JWT_SECRET to be set
+      JWT_SECRET, 
       { expiresIn: '1h' }
     );
 
     // Redirect to the frontend with your custom JWT
+    // Ensure this URL matches your frontend domain
     res.redirect(`https://spotify-matcher.vercel.app?token=${appToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
-    res.status(500).send('Authentication failed.');
+    res.status(500).send('Authentication failed. Check server logs.');
   }
 });
 
-// Protected Route to get the matched user
+// 3. Protected Route to get the matched user
 app.get('/api/match', authMiddleware, async (req, res) => {
   try {
-    // Use the MongoDB _id from the verified JWT for cleaner lookups
     const currentUserId = req.userData.userId; 
 
     const allUsers = await User.find({ _id: { $ne: currentUserId } });
@@ -174,7 +179,7 @@ app.get('/api/match', authMiddleware, async (req, res) => {
   }
 });
 
-// Protected route to fetch a user's Spotify data (fetches from DB first)
+// 4. Protected route to fetch a user's Spotify data
 app.get('/api/spotify/top-artists', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userData.userId); 
@@ -183,8 +188,6 @@ app.get('/api/spotify/top-artists', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "User not authenticated with Spotify." });
     }
 
-    // Since you already fetched and saved topArtists in /callback,
-    // you can return the stored data to reduce Spotify API calls.
     return res.status(200).json({ items: user.topArtists });
 
   } catch (error) {
@@ -196,8 +199,6 @@ app.get('/api/spotify/top-artists', authMiddleware, async (req, res) => {
 // --- Socket.IO Connection ---
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id);
-
-  // NOTE: This should be secured with a JWT check on connection/join for production.
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
@@ -247,12 +248,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// ... socket code above ...
+// --- SERVER STARTUP ---
 
-// ONLY listen if running locally (not on Vercel)
-// ... socket code ...
-
-// 1. Only listen on port if running locally (NOT on Vercel)
+// 1. Only listen on port if running locally (Vercel handles this automatically in the cloud)
 if (require.main === module) {
   const PORT = process.env.PORT || 8888;
   server.listen(PORT, () => {
@@ -260,5 +258,5 @@ if (require.main === module) {
   });
 }
 
-// 2. THIS IS REQUIRED FOR VERCEL TO WORK
+// 2. EXPORT THE APP (CRITICAL FOR VERCEL)
 module.exports = app;
