@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "build": "echo 'Building backend...'"
   },
   "keywords": [],
   "author": "",
@@ -19,8 +20,12 @@
     "mongoose": "^8.18.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
+    
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+    
   }
+  
 }
+
