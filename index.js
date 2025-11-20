@@ -9,6 +9,7 @@ const axios = require('axios');
 const querystring = require('querystring');
 const jwt = require('jsonwebtoken'); 
 
+// --- Dependencies ---
 const User = require('./models/User'); 
 const Chat = require('./models/Chat'); 
 const authMiddleware = require('./middleware/auth'); 
@@ -29,7 +30,7 @@ const io = new Server(server, {
 // --- Configuration ---
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI; 
+const REDIRECT_URI = process.env.REDIRECT_URI;
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -60,10 +61,10 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 
 // --- ROUTES ---
 
-// 1. Redirect to Spotify login (FIXED URL)
+// 1. Redirect to Spotify login
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
-  // ✅ REAL SPOTIFY URL:
+  // 🔴 CORRECT URL: accounts.spotify.com/authorize
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -73,14 +74,14 @@ app.get('/login', (req, res) => {
     }));
 });
 
-// 2. Spotify Callback (FIXED URLs)
+// 2. Spotify Callback
 app.get('/callback', async (req, res) => {
   const code = req.query.code || null;
   
   try {
     const authString = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
 
-    // ✅ REAL SPOTIFY URL: Exchange code for token
+    // 🔴 CORRECT URL: accounts.spotify.com/api/token
     const tokenResponse = await axios({
       method: 'post',
       url: 'https://accounts.spotify.com/api/token',
@@ -97,12 +98,12 @@ app.get('/callback', async (req, res) => {
 
     const { access_token, refresh_token } = tokenResponse.data;
 
-    // ✅ REAL SPOTIFY URL: Fetch Profile
+    // 🔴 CORRECT URL: api.spotify.com/v1/me
     const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
       headers: { 'Authorization': `Bearer ${access_token}` }
     });
 
-    // ✅ REAL SPOTIFY URL: Fetch Top Artists
+    // 🔴 CORRECT URL: api.spotify.com/v1/me/top/artists
     const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', {
       headers: { 'Authorization': `Bearer ${access_token}` },
       params: { time_range: 'medium_term', limit: 20 }
@@ -128,12 +129,11 @@ app.get('/callback', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Redirect to frontend with the token
     res.redirect(`https://spotify-matcher.vercel.app?token=${appToken}`);
 
   } catch (error) {
     console.error('Error in /callback:', error.response ? error.response.data : error.message);
-    res.status(500).send('Authentication failed.');
+    res.status(500).send('Authentication failed. Check server logs.');
   }
 });
 
