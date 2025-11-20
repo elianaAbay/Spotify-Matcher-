@@ -64,7 +64,7 @@ const findBestMatch = (currentUserTopArtists, allOtherUsers) => {
 // 1. Redirect to Spotify login
 app.get('/login', (req, res) => {
   const scope = 'user-read-private user-top-read';
-  // 🔴 CORRECT URL: accounts.spotify.com/authorize
+  // ✅ OFFICIAL SPOTIFY AUTH URL
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -81,7 +81,7 @@ app.get('/callback', async (req, res) => {
   try {
     const authString = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
 
-    // 🔴 CORRECT URL: accounts.spotify.com/api/token
+    // ✅ OFFICIAL SPOTIFY TOKEN URL
     const tokenResponse = await axios({
       method: 'post',
       url: 'https://accounts.spotify.com/api/token',
@@ -98,12 +98,12 @@ app.get('/callback', async (req, res) => {
 
     const { access_token, refresh_token } = tokenResponse.data;
 
-    // 🔴 CORRECT URL: api.spotify.com/v1/me
+    // ✅ OFFICIAL SPOTIFY PROFILE URL
     const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
       headers: { 'Authorization': `Bearer ${access_token}` }
     });
 
-    // 🔴 CORRECT URL: api.spotify.com/v1/me/top/artists
+    // ✅ OFFICIAL SPOTIFY ARTISTS URL
     const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', {
       headers: { 'Authorization': `Bearer ${access_token}` },
       params: { time_range: 'medium_term', limit: 20 }
