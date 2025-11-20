@@ -59,27 +59,36 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const accessToken = params.get('access_token');
+            // FIXED: Changed 'access_token' to 'token' to match your backend
+            const token = params.get('token');
             
             const loginSection = document.getElementById('login-section');
             const appSection = document.getElementById('app-section');
             const matchButton = document.getElementById('match-button');
             
-            if (accessToken) {
+            if (token) {
                 // User is logged in
                 loginSection.classList.add('hidden');
                 appSection.classList.remove('hidden');
                 
+                // Optional: Clean up the URL by removing the token so it looks nicer
+                window.history.replaceState({}, document.title, "/");
+                
                 matchButton.addEventListener('click', () => {
                     // Send a request to your server's /api/match endpoint
-                    fetch(`/api/match?access_token=${accessToken}`)
+                    // FIXED: Added Authorization header which is the standard way to send JWTs
+                    fetch('/api/match', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
                         .then(response => response.json())
                         .then(data => {
                             // Display the match result to the user
                             if (data.match) {
                                 alert(`You matched with: ${data.match}`);
                             } else {
-                                alert('No match found. Invite your friends!');
+                                alert(data.message || 'No match found. Invite your friends!');
                             }
                         })
                         .catch(error => {
@@ -95,5 +104,3 @@
             }
         });
     </script>
-</body>
-</html>
