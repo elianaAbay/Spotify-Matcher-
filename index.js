@@ -15,7 +15,14 @@ const Chat = require('./models/Chat');
 const authMiddleware = require('./middleware/auth'); 
 
 const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve React build files if they exist, otherwise serve public folder
+const reactBuildPath = path.join(__dirname, 'client', 'build');
+const publicPath = path.join(__dirname, 'public');
+if (require('fs').existsSync(reactBuildPath)) {
+  app.use(express.static(reactBuildPath));
+} else {
+  app.use(express.static(publicPath));
+}
 app.use(express.json());
 
 // --- Server & Socket.io Setup ---
@@ -192,6 +199,21 @@ io.on('connection', (socket) => {
       io.to(chat._id.toString()).emit('chat message', { senderId, message, chatId: chat._id.toString() });
     } catch (error) { console.error(error); }
   });
+});
+
+// Serve React app for all non-API routes (client-side routing)
+// This must be last, after all API routes and Socket.IO setup
+app.get('*', (req, res) => {
+  const reactBuildPath = path.join(__dirname, 'client', 'build', 'index.html');
+  const publicPath = path.join(__dirname, 'public', 'index.html');
+  
+  if (require('fs').existsSync(reactBuildPath)) {
+    res.sendFile(reactBuildPath);
+  } else if (require('fs').existsSync(publicPath)) {
+    res.sendFile(publicPath);
+  } else {
+    res.status(404).send('Not found');
+  }
 });
 
 // --- START SERVER ---

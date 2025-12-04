@@ -146,9 +146,9 @@ export function LoginForm() {
                 Remember me
               </span>
             </label>
-            <a href="#" className="text-zinc-300 hover:text-green-500 transition-colors">
+            <button type="button" className="text-zinc-300 hover:text-green-500 transition-colors bg-transparent border-0 p-0 cursor-pointer">
               Forgot password?
-            </a>
+            </button>
           </div>
 
           <motion.button
@@ -163,9 +163,9 @@ export function LoginForm() {
 
         <div className="mt-6 text-center">
           <span className="text-zinc-400">Don't have an account? </span>
-          <a href="#" className="text-green-500 hover:text-green-400 transition-colors">
+          <button type="button" className="text-green-500 hover:text-green-400 transition-colors bg-transparent border-0 p-0 cursor-pointer">
             Sign up for Spotify
-          </a>
+          </button>
         </div>
       </div>
     </motion.div>
