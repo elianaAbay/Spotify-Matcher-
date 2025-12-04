@@ -15,15 +15,18 @@ const Chat = require('./models/Chat');
 const authMiddleware = require('./middleware/auth'); 
 
 const app = express();
-// Serve React build files if they exist, otherwise serve public folder
-const reactBuildPath = path.join(__dirname, 'client', 'build');
-const publicPath = path.join(__dirname, 'public');
-if (require('fs').existsSync(reactBuildPath)) {
-  app.use(express.static(reactBuildPath));
-} else {
-  app.use(express.static(publicPath));
-}
 app.use(express.json());
+
+// Serve React build files (production)
+const reactBuildPath = path.join(__dirname, 'client', 'build');
+const fs = require('fs');
+if (fs.existsSync(reactBuildPath)) {
+  // Serve static files from React build (CSS, JS, images, etc.)
+  app.use(express.static(reactBuildPath, { index: false }));
+  console.log('✅ Serving React build from client/build');
+} else {
+  console.log('⚠️  React build not found at client/build');
+}
 
 // --- Server & Socket.io Setup ---
 const server = http.createServer(app);
@@ -204,15 +207,17 @@ io.on('connection', (socket) => {
 // Serve React app for all non-API routes (client-side routing)
 // This must be last, after all API routes and Socket.IO setup
 app.get('*', (req, res) => {
-  const reactBuildPath = path.join(__dirname, 'client', 'build', 'index.html');
-  const publicPath = path.join(__dirname, 'public', 'index.html');
+  // Skip API routes, login, and callback - they should be handled above
+  if (req.path.startsWith('/api') || req.path === '/login' || req.path === '/callback') {
+    return res.status(404).json({ error: 'Not found' });
+  }
   
-  if (require('fs').existsSync(reactBuildPath)) {
+  const reactBuildPath = path.join(__dirname, 'client', 'build', 'index.html');
+  
+  if (fs.existsSync(reactBuildPath)) {
     res.sendFile(reactBuildPath);
-  } else if (require('fs').existsSync(publicPath)) {
-    res.sendFile(publicPath);
   } else {
-    res.status(404).send('Not found');
+    res.status(404).send('React build not found. Please build the client app.');
   }
 });
 
