@@ -1,83 +1,39 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #121212; /* Dark background color */
-  color: #fff; /* White text color */
-}
-
+/* client/src/App.css */
 .App {
   text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh; /* Full viewport height */
-}
-
-.App-header {
-  background-color: #1e1e1e; /* Slightly lighter dark color for the card/header */
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 90%;
-  max-width: 500px;
+  justify-content: center;
+  color: white;
+  
+  /* The Moving Gradient */
+  background: linear-gradient(-45deg, #1DB954, #191414, #121212, #404040);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
 }
 
-h1 {
-  font-size: 2.5rem;
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.login-btn {
+  background-color: #1DB954; /* Spotify Green */
+  color: white;
+  font-size: 1.2rem;
   font-weight: bold;
-  margin-bottom: 10px;
-  color: #1db954; /* Spotify green */
-}
-
-p {
-  font-size: 1rem;
-  color: #b3b3b3;
-  margin-bottom: 30px;
-}
-
-.login-button {
-  display: inline-block;
-  padding: 15px 40px;
-  background-color: #1db954; /* Spotify green */
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: bold;
-  text-decoration: none;
+  padding: 15px 30px;
+  border: none;
   border-radius: 50px;
-  transition: transform 0.2s, background-color 0.2s;
   cursor: pointer;
-}
-
-.login-button:hover {
-  transform: scale(1.05); /* Slightly enlarge on hover */
-  background-color: #1ed760; /* Slightly brighter green */
-}
-
-/* Styling for the list of artists */
-ul {
-  list-style-type: none; /* Remove bullet points */
-  padding: 0;
+  transition: transform 0.2s ease;
   margin-top: 20px;
-  text-align: left;
 }
 
-li {
-  background-color: #282828;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  font-size: 1rem;
-  color: #fff;
-  transition: background-color 0.2s;
-}
-
-li:hover {
-  background-color: #333;
+.login-btn:hover {
+  transform: scale(1.05);
+  background-color: #1ed760;
 }
