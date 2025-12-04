@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  // 1. State to store mouse position
+  // State to store mouse position
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  // 2. Update state whenever mouse moves
+  // Update state whenever mouse moves
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePosition({
@@ -27,7 +27,6 @@ function App() {
   };
 
   return (
-    // 3. Pass the coordinates to CSS using inline styles
     <div 
       className="App"
       style={{
@@ -35,6 +34,12 @@ function App() {
         '--mouse-y': `${mousePosition.y}px`
       }}
     >
+      {/* --- NEW VIBRANT CIRCLES --- */}
+      {/* These are placed BEFORE the content container so they sit behind it */}
+      <div className="bg-shape shape-1"></div>
+      <div className="bg-shape shape-2"></div>
+      <div className="bg-shape shape-3"></div>
+
       <div className="content-container">
         <h1>Welcome to Spotify Match Blend</h1>
         <p>Find your music match and start chatting!</p>

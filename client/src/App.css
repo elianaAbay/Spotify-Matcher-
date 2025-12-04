@@ -1,4 +1,3 @@
-/* client/src/App.css */
 .App {
   text-align: center;
   min-height: 100vh;
@@ -7,33 +6,110 @@
   align-items: center;
   justify-content: center;
   color: white;
+  position: relative;
+  overflow: hidden;
+
+  /* Base Background Color (Dark) */
+  background-color: #121212; 
   
-  /* The Moving Gradient */
-  background: linear-gradient(-45deg, #1DB954, #191414, #121212, #404040);
-  background-size: 400% 400%;
-  animation: gradientMove 15s ease infinite;
+  /* The Interactive Layer: The glow that follows your mouse */
+  background-image: radial-gradient(
+    circle at var(--mouse-x) var(--mouse-y), 
+    rgba(29, 185, 84, 0.3) 0%, /* Slightly more transparent than before */
+    transparent 50%
+  );
+  z-index: 1;
 }
 
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* --- NEW VIBRANT SHAPES --- */
+.bg-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px); /* Makes them very soft and glowing */
+  opacity: 0.5; /* Keeps them subtle so text is readable */
+  z-index: 0; /* Ensures they stay behind the mouse effect and text */
+  animation: floatAnimation 20s infinite ease-in-out alternate;
+}
+
+/* Shape 1: Top Left - Bright Spotify Green */
+.shape-1 {
+  top: -10%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: #1ed760;
+  animation-delay: 0s;
+}
+
+/* Shape 2: Bottom Right - Deeper Green/Teal */
+.shape-2 {
+  bottom: -20%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: #1DB954;
+  animation-delay: -5s; /* Starts the animation at a different point */
+}
+
+/* Shape 3: Top Right/Center - A hint of cyan/blue for depth */
+.shape-3 {
+  top: 30%;
+  right: 20%;
+  width: 400px;
+  height: 400px;
+  background: #19e68c; 
+  animation-delay: -10s;
+  opacity: 0.3;
+}
+
+/* The animation that makes the shapes slowly float and pulse */
+@keyframes floatAnimation {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+     transform: translate(50px, 100px) scale(1.1);
+  }
+  100% {
+    transform: translate(-30px, 50px) scale(0.9);
+  }
+}
+
+/* --- CONTENT STYLING --- */
+.content-container {
+  z-index: 10; /* Ensures text stays on top of everything */
+  background: rgba(255, 255, 255, 0.03); /* Very subtle glass effect */
+  padding: 50px;
+  border-radius: 20px;
+  backdrop-filter: blur(20px); /* Stronger blur on the glass box */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .login-btn {
-  background-color: #1DB954; /* Spotify Green */
+  background-color: #1DB954;
   color: white;
   font-size: 1.2rem;
   font-weight: bold;
-  padding: 15px 30px;
+  padding: 15px 40px;
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  margin-top: 20px;
+  transition: all 0.3s ease;
+  margin-top: 30px;
+  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4);
 }
 
 .login-btn:hover {
   transform: scale(1.05);
   background-color: #1ed760;
+  box-shadow: 0 6px 25px rgba(29, 185, 84, 0.8);
 }
