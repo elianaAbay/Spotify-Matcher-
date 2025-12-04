@@ -22,7 +22,8 @@ const reactBuildPath = path.join(__dirname, 'client', 'build');
 const fs = require('fs');
 if (fs.existsSync(reactBuildPath)) {
   // Serve static files from React build (CSS, JS, images, etc.)
-  app.use(express.static(reactBuildPath, { index: false }));
+  // This must come before the catch-all route
+  app.use(express.static(reactBuildPath));
   console.log('✅ Serving React build from client/build');
 } else {
   console.log('⚠️  React build not found at client/build');
@@ -206,12 +207,14 @@ io.on('connection', (socket) => {
 
 // Serve React app for all non-API routes (client-side routing)
 // This must be last, after all API routes and Socket.IO setup
+// Express static middleware handles static files before this route
 app.get('*', (req, res) => {
   // Skip API routes, login, and callback - they should be handled above
   if (req.path.startsWith('/api') || req.path === '/login' || req.path === '/callback') {
     return res.status(404).json({ error: 'Not found' });
   }
   
+  // Serve React app's index.html for all other routes (client-side routing)
   const reactBuildPath = path.join(__dirname, 'client', 'build', 'index.html');
   
   if (fs.existsSync(reactBuildPath)) {
