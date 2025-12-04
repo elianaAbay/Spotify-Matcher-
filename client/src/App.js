@@ -1,23 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 function App() {
-  // State to store mouse position
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const raf = useRef(null);
 
-  // Update state whenever mouse moves
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({
-        x: e.clientX,
-        y: e.clientY,
+      if (raf.current) cancelAnimationFrame(raf.current);
+
+      raf.current = requestAnimationFrame(() => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
       });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-
-    // Cleanup listener when component unmounts
     return () => {
+      if (raf.current) cancelAnimationFrame(raf.current);
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
@@ -27,26 +26,39 @@ function App() {
   };
 
   return (
-    <div 
+    <div
       className="App"
       style={{
         '--mouse-x': `${mousePosition.x}px`,
-        '--mouse-y': `${mousePosition.y}px`
+        '--mouse-y': `${mousePosition.y}px`,
+        '--mx': `${mousePosition.x / window.innerWidth}`,
+        '--my': `${mousePosition.y / window.innerHeight}`,
       }}
     >
-      {/* --- NEW VIBRANT CIRCLES --- */}
-      {/* These are placed BEFORE the content container so they sit behind it */}
+      {/* extra fun layers */}
+      <div className="bg-grid" />
+      <div className="sparkles" />
+
       <div className="bg-shape shape-1"></div>
       <div className="bg-shape shape-2"></div>
       <div className="bg-shape shape-3"></div>
+      <div className="bg-shape shape-4"></div>
+      <div className="bg-shape shape-5"></div>
 
       <div className="content-container">
         <h1>Welcome to Spotify Match Blend</h1>
         <p>Find your music match and start chatting!</p>
-        
+
         <button onClick={handleLogin} className="login-btn">
           Log in with Spotify
+          <span className="btn-shine" />
         </button>
+
+        <div className="mini-hints">
+          <span className="pill">✨ Live glow</span>
+          <span className="pill">🎧 Match vibes</span>
+          <span className="pill">💬 Start chatting</span>
+        </div>
       </div>
     </div>
   );
