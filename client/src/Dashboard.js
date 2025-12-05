@@ -1,13 +1,11 @@
 // client/src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
-const Dashboard = () => {
+const Dashboard = ({ onLogout }) => {
     const [topArtists, setTopArtists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -15,22 +13,26 @@ const Dashboard = () => {
             const token = localStorage.getItem('userToken');
 
             if (!token) {
-                // If no token, redirect to login page
-                navigate('/login');
+                // If no token, trigger logout
+                if (onLogout) onLogout();
                 return;
             }
 
             try {
-                // Step 2: Make a request to your backend's protected endpoint
-                // We'll create this endpoint in the next phase
-                const response = await axios.get('http://localhost:5000/api/spotify/top-artists', {
+                // Make a request to your backend's protected endpoint
+                // Use relative URL for production
+                const apiUrl = window.location.origin.includes('localhost') 
+                    ? 'http://localhost:8888/api/spotify/top-artists'
+                    : '/api/spotify/top-artists';
+                
+                const response = await axios.get(apiUrl, {
                     headers: {
                         'Authorization': `Bearer ${token}` // Attach the token to the request header
                     }
                 });
 
-                // Step 3: Set the fetched data to state
-                setTopArtists(response.data.items);
+                // Set the fetched data to state
+                setTopArtists(response.data.items || []);
                 setLoading(false);
 
             } catch (err) {
@@ -41,30 +43,76 @@ const Dashboard = () => {
                 // If the token is invalid or expired, log the user out
                 if (err.response && err.response.status === 401) {
                     localStorage.removeItem('userToken');
-                    navigate('/login');
+                    if (onLogout) onLogout();
                 }
             }
         };
 
         fetchUserData();
-    }, [navigate]);
+    }, [onLogout]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('userToken');
+        if (onLogout) onLogout();
+    };
 
     if (loading) {
-        return <div>Loading your Spotify data...</div>;
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+                <div className="text-xl">Loading your Spotify data...</div>
+            </div>
+        );
     }
 
     if (error) {
-        return <div>Error: {error}</div>;
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-red-500 mb-4">Error: {error}</div>
+                    <button 
+                        onClick={handleLogout}
+                        className="px-4 py-2 bg-green-500 text-black rounded-full hover:bg-green-400"
+                    >
+                        Log Out
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <h1>Your Top Artists</h1>
-            <ul>
-                {topArtists.map(artist => (
-                    <li key={artist.id}>{artist.name}</li>
-                ))}
-            </ul>
+        <div className="min-h-screen bg-black text-white p-8">
+            <div className="max-w-4xl mx-auto">
+                <div className="flex justify-between items-center mb-8">
+                    <h1 className="text-3xl font-bold">Your Top Artists</h1>
+                    <button 
+                        onClick={handleLogout}
+                        className="px-4 py-2 bg-green-500 text-black rounded-full hover:bg-green-400 transition-colors"
+                    >
+                        Log Out
+                    </button>
+                </div>
+                
+                {topArtists.length === 0 ? (
+                    <div className="text-center text-gray-400">
+                        <p>No top artists found. Make sure you've listened to music on Spotify!</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {topArtists.map((artist, index) => (
+                            <div 
+                                key={index} 
+                                className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 hover:border-green-500 transition-colors"
+                            >
+                                <div className="text-lg font-semibold text-green-400">
+                                    #{index + 1}
+                                </div>
+                                <div className="text-white text-xl mt-2">{artist}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
