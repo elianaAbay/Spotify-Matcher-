@@ -18,15 +18,21 @@ const app = express();
 app.use(express.json());
 
 // Serve React build files (production)
+// Try public first (for Vercel), then client/build (for local dev)
+const publicPath = path.join(__dirname, 'public');
 const reactBuildPath = path.join(__dirname, 'client', 'build');
 const fs = require('fs');
-if (fs.existsSync(reactBuildPath)) {
-  // Serve static files from React build (CSS, JS, images, etc.)
-  // This must come before the catch-all route
+
+if (fs.existsSync(publicPath) && fs.existsSync(path.join(publicPath, 'index.html'))) {
+  // Serve from public directory (Vercel deployment)
+  app.use(express.static(publicPath));
+  console.log('✅ Serving React build from public');
+} else if (fs.existsSync(reactBuildPath)) {
+  // Serve from client/build (local development)
   app.use(express.static(reactBuildPath));
   console.log('✅ Serving React build from client/build');
 } else {
-  console.log('⚠️  React build not found at client/build');
+  console.log('⚠️  React build not found');
 }
 
 // --- Server & Socket.io Setup ---
@@ -215,9 +221,13 @@ app.get('*', (req, res) => {
   }
   
   // Serve React app's index.html for all other routes (client-side routing)
+  // Try public first (Vercel), then client/build (local dev)
+  const publicIndexPath = path.join(__dirname, 'public', 'index.html');
   const reactBuildPath = path.join(__dirname, 'client', 'build', 'index.html');
   
-  if (fs.existsSync(reactBuildPath)) {
+  if (fs.existsSync(publicIndexPath)) {
+    res.sendFile(publicIndexPath);
+  } else if (fs.existsSync(reactBuildPath)) {
     res.sendFile(reactBuildPath);
   } else {
     res.status(404).send('React build not found. Please build the client app.');

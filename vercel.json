@@ -1,27 +1,23 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build && cd .. && mkdir -p public && cp -r client/build/* public/ && echo 'Build completed successfully'",
+  "buildCommand": "cd client && npm install && npm run build && cd .. && rm -rf public && mkdir -p public && cp -r client/build/* public/ && ls -la public/ && echo '✅ Build and copy completed successfully'",
   "outputDirectory": "public",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/static/(.*)",
-      "dest": "/index.js"
+      "source": "/api/(.*)",
+      "destination": "/index.js"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/index.js"
+      "source": "/login",
+      "destination": "/index.js"
     },
     {
-      "src": "/login",
-      "dest": "/index.js"
+      "source": "/callback",
+      "destination": "/index.js"
     },
     {
-      "src": "/callback",
-      "dest": "/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.js"
+      "source": "/(.*)",
+      "destination": "/index.js"
     }
   ]
 }
