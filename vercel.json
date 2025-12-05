@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build",
+  "buildCommand": "cd client && npm install && npm run build && cd .. && mkdir -p public && cp -r client/build/* public/ && echo 'Build completed successfully'",
+  "outputDirectory": "public",
   "routes": [
     {
       "src": "/static/(.*)",
